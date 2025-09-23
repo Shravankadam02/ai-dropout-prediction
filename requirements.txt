@@ -4,3 +4,4 @@ numpy
 scikit-learn
 Werkzeug
 Jinja2
+gunicorn
