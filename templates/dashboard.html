@@ -1,0 +1,833 @@
+{% extends "base.html" %}
+
+{% block title %}Mentor Dashboard - AI Dropout Prediction System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-1">
+                <i class="bi bi-speedometer2 me-2"></i>Mentor Dashboard
+            </h1>
+            <p class="text-muted mb-0">Monitor student risk levels and manage interventions</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshDashboard()">
+                <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+            </button>
+            <button class="btn btn-primary" onclick="uploadData()">
+                <i class="bi bi-upload me-2"></i>Upload Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-danger bg-light">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="bi bi-exclamation-triangle-fill text-danger fs-1 me-2"></i>
+                        <div>
+                            <h2 class="fw-bold mb-0 text-danger" id="highRiskCardCount">0</h2>
+                            <small class="text-muted">High Risk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-warning bg-light">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="bi bi-exclamation-circle-fill text-warning fs-1 me-2"></i>
+                        <div>
+                            <h2 class="fw-bold mb-0 text-warning" id="mediumRiskCardCount">0</h2>
+                            <small class="text-muted">Medium Risk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-success bg-light">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="bi bi-check-circle-fill text-success fs-1 me-2"></i>
+                        <div>
+                            <h2 class="fw-bold mb-0 text-success" id="lowRiskCardCount">0</h2>
+                            <small class="text-muted">Low Risk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-primary bg-light">
+                <div class="card-body text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <i class="bi bi-people-fill text-primary fs-1 me-2"></i>
+                        <div>
+                            <h2 class="fw-bold mb-0 text-primary" id="totalStudentsCount">0</h2>
+                            <small class="text-muted">Total Students</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" id="searchInput" 
+                               placeholder="Search by name, student ID, or class...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="riskFilter">
+                        <option value="">All Risk Levels</option>
+                        <option value="High">High Risk Only</option>
+                        <option value="Medium">Medium Risk Only</option>
+                        <option value="Low">Low Risk Only</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="classFilter">
+                        <option value="">All Classes</option>
+                        <option value="Diploma-CS">Diploma-CS</option>
+                        <option value="Diploma-ME">Diploma-ME</option>
+                        <option value="Diploma-EE">Diploma-EE</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Students Table -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="bi bi-table me-2"></i>Student Risk Assessment
+                <span class="badge bg-light text-primary ms-2" id="filteredCount">0 students</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th width="12%">Student ID</th>
+                            <th width="20%">Name</th>
+                            <th width="15%">Class</th>
+                            <th width="12%">Attendance</th>
+                            <th width="12%">Fee Status</th>
+                            <th width="12%">Test Avg</th>
+                            <th width="12%">Risk Score</th>
+                            <th width="15%">Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center py-5">
+                                <div class="loading-spinner spinner-border text-primary mb-3"></div>
+                                <div class="text-muted">Loading student data...</div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Student Profile Modal -->
+<div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-badge me-2"></i>
+                    <span id="modalStudentName">Student Profile</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Student Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-info-circle me-2"></i>Student Information
+                                </h6>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Student ID</small>
+                                        <div class="fw-semibold" id="modalStudentId">-</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Class</small>
+                                        <div class="fw-semibold" id="modalStudentClass">-</div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <small class="text-muted">Roll No</small>
+                                        <div class="fw-semibold" id="modalStudentRoll">-</div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <small class="text-muted">Attempts</small>
+                                        <div class="fw-semibold" id="modalStudentAttempts">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card" id="riskScoreCard">
+                            <div class="card-body text-center">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="bi bi-speedometer me-2"></i>Risk Assessment
+                                </h6>
+                                <div class="display-4 fw-bold mb-2" id="modalRiskScore">0.000</div>
+                                <span class="badge fs-6 px-3 py-2" id="modalRiskBadge">Low Risk</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Row -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="h4 mb-1" id="modalAttendance">0%</div>
+                            <small class="text-muted">Attendance</small>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div class="progress-bar" id="attendanceProgress"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="h4 mb-1" id="modalFeeDays">0</div>
+                            <small class="text-muted">Fee Due (Days)</small>
+                            <div class="mt-2">
+                                <span class="badge" id="feeStatusBadge">Current</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <div class="h4 mb-1" id="modalTestAvg">0.0</div>
+                            <small class="text-muted">Current Test Average</small>
+                            <div class="mt-2">
+                                <small class="text-muted">Previous: <span id="modalPrevAvg">0.0</span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-graph-up me-2"></i>Test Score Trend
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="testTrendChart" width="300" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-pie-chart me-2"></i>Risk Breakdown
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="riskBreakdownChart" width="300" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Factors -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>Risk Factors
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="riskFactors">
+                            <div class="text-center text-muted">
+                                <div class="spinner-border spinner-border-sm me-2"></div>
+                                Loading risk analysis...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="bi bi-lightbulb me-2"></i>Intervention Recommendations
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="recommendations">
+                            <div class="text-center text-muted">
+                                <div class="spinner-border spinner-border-sm me-2"></div>
+                                Generating recommendations...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Intervention Notes -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">
+                            <i class="bi bi-journal-text me-2"></i>Intervention Notes
+                        </h6>
+                        <button class="btn btn-sm btn-primary" onclick="showAddNoteForm()">
+                            <i class="bi bi-plus me-1"></i>Add Note
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Add Note Form (hidden by default) -->
+                        <div id="addNoteForm" style="display: none;">
+                            <div class="mb-3">
+                                <textarea class="form-control" id="newNoteText" rows="3" 
+                                          placeholder="Enter intervention note..."></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary btn-sm" onclick="saveNote()">
+                                    <i class="bi bi-check me-1"></i>Save Note
+                                </button>
+                                <button class="btn btn-secondary btn-sm" onclick="cancelAddNote()">
+                                    Cancel
+                                </button>
+                            </div>
+                            <hr>
+                        </div>
+
+                        <!-- Existing Notes -->
+                        <div id="interventionNotes">
+                            <div class="text-center text-muted">
+                                <div class="spinner-border spinner-border-sm me-2"></div>
+                                Loading intervention notes...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let studentsData = [];
+let filteredData = [];
+let currentStudentId = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadStudents();
+    setupFilters();
+});
+
+function refreshDashboard() {
+    loadStudents();
+}
+
+function loadStudents() {
+    showLoading();
+    
+    fetch('/api/students')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            
+            if (data.error) {
+                showAlert('warning', data.error + ' Please upload data or load sample data.');
+                updateSummaryCards(0, 0, 0, 0);
+                document.getElementById('studentsTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-muted mb-3"></i>
+                            <div class="text-muted">No student data available</div>
+                            <button class="btn btn-primary mt-3" onclick="loadSampleData()">
+                                Load Sample Data
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            studentsData = data.students;
+            filteredData = [...studentsData];
+            renderStudentsTable();
+            updateSummaryCards();
+            updateSidebarStats();
+        })
+        .catch(error => {
+            hideLoading();
+            showAlert('danger', 'Error loading student data: ' + error.message);
+        });
+}
+
+function renderStudentsTable() {
+    const tbody = document.getElementById('studentsTableBody');
+    
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="8" class="text-center py-4 text-muted">
+                    <i class="bi bi-search fs-3 mb-2"></i>
+                    <div>No students match the current filters</div>
+                </td>
+            </tr>
+        `;
+        document.getElementById('filteredCount').textContent = '0 students';
+        return;
+    }
+    
+    const rows = filteredData.map(student => {
+        const riskColorClass = `risk-${student.risk_level.toLowerCase()}`;
+        const badgeClass = `badge-risk-${student.risk_level.toLowerCase()}`;
+        
+        return `
+            <tr onclick="showStudentProfile('${student.student_id}')" style="cursor: pointer;">
+                <td><strong>${student.student_id}</strong></td>
+                <td>
+                    <div class="fw-semibold">${student.first_name} ${student.last_name}</div>
+                    <small class="text-muted">Roll: ${student.roll_no}</small>
+                </td>
+                <td><span class="badge bg-secondary">${student.class}</span></td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <span class="me-2">${student.attendance_percent}%</span>
+                        <div class="progress flex-fill" style="width: 50px; height: 6px;">
+                            <div class="progress-bar ${student.attendance_percent >= 75 ? 'bg-success' : student.attendance_percent >= 60 ? 'bg-warning' : 'bg-danger'}" 
+                                 style="width: ${Math.min(student.attendance_percent, 100)}%"></div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    ${student.fees_due_days > 0 
+                        ? `<span class="badge bg-danger">${student.fees_due_days} days</span>` 
+                        : `<span class="badge bg-success">Current</span>`
+                    }
+                </td>
+                <td class="fw-semibold">${student.last_3_tests_avg}</td>
+                <td class="fw-bold ${riskColorClass}">${student.risk_score}</td>
+                <td>
+                    <span class="badge ${badgeClass} px-3 py-2">
+                        <i class="bi ${student.risk_level === 'High' ? 'bi-exclamation-triangle-fill' : 
+                                     student.risk_level === 'Medium' ? 'bi-exclamation-circle-fill' : 
+                                     'bi-check-circle-fill'} me-1"></i>
+                        ${student.risk_level}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = rows;
+    document.getElementById('filteredCount').textContent = `${filteredData.length} student${filteredData.length !== 1 ? 's' : ''}`;
+}
+
+function updateSummaryCards(high, medium, low, total) {
+    if (arguments.length === 0) {
+        // Calculate from current data
+        const counts = studentsData.reduce((acc, student) => {
+            acc[student.risk_level.toLowerCase()]++;
+            acc.total++;
+            return acc;
+        }, { high: 0, medium: 0, low: 0, total: 0 });
+        
+        high = counts.high;
+        medium = counts.medium;
+        low = counts.low;
+        total = counts.total;
+    }
+    
+    document.getElementById('highRiskCardCount').textContent = high;
+    document.getElementById('mediumRiskCardCount').textContent = medium;
+    document.getElementById('lowRiskCardCount').textContent = low;
+    document.getElementById('totalStudentsCount').textContent = total;
+}
+
+function updateSidebarStats() {
+    const counts = studentsData.reduce((acc, student) => {
+        acc[student.risk_level.toLowerCase()]++;
+        return acc;
+    }, { high: 0, medium: 0, low: 0 });
+    
+    document.getElementById('highRiskCount').textContent = counts.high;
+    document.getElementById('mediumRiskCount').textContent = counts.medium;
+    document.getElementById('lowRiskCount').textContent = counts.low;
+}
+
+function setupFilters() {
+    const searchInput = document.getElementById('searchInput');
+    const riskFilter = document.getElementById('riskFilter');
+    const classFilter = document.getElementById('classFilter');
+    
+    [searchInput, riskFilter, classFilter].forEach(element => {
+        element.addEventListener('input', applyFilters);
+    });
+}
+
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const riskFilter = document.getElementById('riskFilter').value;
+    const classFilter = document.getElementById('classFilter').value;
+    
+    filteredData = studentsData.filter(student => {
+        const matchesSearch = !searchTerm || 
+            student.first_name.toLowerCase().includes(searchTerm) ||
+            student.last_name.toLowerCase().includes(searchTerm) ||
+            student.student_id.toLowerCase().includes(searchTerm) ||
+            student.class.toLowerCase().includes(searchTerm);
+            
+        const matchesRisk = !riskFilter || student.risk_level === riskFilter;
+        const matchesClass = !classFilter || student.class === classFilter;
+        
+        return matchesSearch && matchesRisk && matchesClass;
+    });
+    
+    renderStudentsTable();
+}
+
+function showStudentProfile(studentId) {
+    currentStudentId = studentId;
+    
+    fetch(`/api/student/${studentId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showAlert('danger', data.error);
+                return;
+            }
+            
+            populateStudentModal(data);
+            new bootstrap.Modal(document.getElementById('studentModal')).show();
+        })
+        .catch(error => {
+            showAlert('danger', 'Error loading student profile: ' + error.message);
+        });
+}
+
+function populateStudentModal(student) {
+    // Basic info
+    document.getElementById('modalStudentName').textContent = `${student.first_name} ${student.last_name}`;
+    document.getElementById('modalStudentId').textContent = student.student_id;
+    document.getElementById('modalStudentClass').textContent = student.class;
+    document.getElementById('modalStudentRoll').textContent = student.roll_no;
+    document.getElementById('modalStudentAttempts').textContent = student.attempts_in_subject_X;
+    
+    // Risk info
+    const risk = student.risk_analysis;
+    document.getElementById('modalRiskScore').textContent = risk.risk_score;
+    
+    const riskBadge = document.getElementById('modalRiskBadge');
+    riskBadge.textContent = `${risk.risk_level} Risk`;
+    riskBadge.className = `badge fs-6 px-3 py-2 badge-risk-${risk.risk_level.toLowerCase()}`;
+    
+    const riskCard = document.getElementById('riskScoreCard');
+    riskCard.className = `card border-${risk.risk_color}`;
+    
+    // Metrics
+    document.getElementById('modalAttendance').textContent = `${student.attendance_percent}%`;
+    const attendanceProgress = document.getElementById('attendanceProgress');
+    attendanceProgress.style.width = `${Math.min(student.attendance_percent, 100)}%`;
+    attendanceProgress.className = `progress-bar ${student.attendance_percent >= 75 ? 'bg-success' : student.attendance_percent >= 60 ? 'bg-warning' : 'bg-danger'}`;
+    
+    document.getElementById('modalFeeDays').textContent = student.fees_due_days;
+    const feeStatusBadge = document.getElementById('feeStatusBadge');
+    if (student.fees_due_days > 0) {
+        feeStatusBadge.textContent = `${student.fees_due_days} days overdue`;
+        feeStatusBadge.className = 'badge bg-danger';
+    } else {
+        feeStatusBadge.textContent = 'Current';
+        feeStatusBadge.className = 'badge bg-success';
+    }
+    
+    document.getElementById('modalTestAvg').textContent = student.last_3_tests_avg;
+    document.getElementById('modalPrevAvg').textContent = student.previous_3_tests_avg;
+    
+    // Charts
+    createTestTrendChart(student);
+    createRiskBreakdownChart(risk);
+    
+    // Risk factors
+    renderRiskFactors(risk.top_reasons || []);
+    
+    // Recommendations
+    renderRecommendations(risk.recommendations || []);
+    
+    // Notes
+    renderInterventionNotes(student.intervention_notes || []);
+}
+
+function createTestTrendChart(student) {
+    const ctx = document.getElementById('testTrendChart').getContext('2d');
+    
+    // Clear existing chart
+    if (window.testTrendChart) {
+        window.testTrendChart.destroy();
+    }
+    
+    const data = [
+        student.last_test_1 || 0,
+        student.last_test_2 || 0,
+        student.last_test_3 || 0
+    ];
+    
+    window.testTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Test 1', 'Test 2', 'Test 3'],
+            datasets: [{
+                label: 'Test Scores',
+                data: data,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#2563eb',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function createRiskBreakdownChart(risk) {
+    const ctx = document.getElementById('riskBreakdownChart').getContext('2d');
+    
+    // Clear existing chart
+    if (window.riskBreakdownChart) {
+        window.riskBreakdownChart.destroy();
+    }
+    
+    const components = risk.weighted_components;
+    
+    window.riskBreakdownChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Attendance', 'Score Trend', 'Fee Payment', 'Attempts'],
+            datasets: [{
+                data: [
+                    (components.attendance_weighted * 100).toFixed(1),
+                    (components.score_trend_weighted * 100).toFixed(1),
+                    (components.fee_weighted * 100).toFixed(1),
+                    (components.attempts_weighted * 100).toFixed(1)
+                ],
+                backgroundColor: [
+                    '#ef4444',
+                    '#f59e0b',
+                    '#8b5cf6',
+                    '#06b6d4'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 15,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderRiskFactors(factors) {
+    const container = document.getElementById('riskFactors');
+    
+    if (factors.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-check-circle fs-4 text-success"></i>
+                <div class="mt-2">No significant risk factors identified</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const factorsHtml = factors.map((factor, index) => {
+        const severityColor = factor.severity === 'High' ? 'danger' : 
+                            factor.severity === 'Medium' ? 'warning' : 'info';
+        
+        return `
+            <div class="d-flex align-items-center mb-3">
+                <div class="me-3">
+                    <i class="bi bi-${index + 1}-circle-fill text-${severityColor} fs-5"></i>
+                </div>
+                <div class="flex-fill">
+                    <div class="fw-semibold">${factor.factor}</div>
+                    <div class="text-muted">${factor.value}</div>
+                </div>
+                <div>
+                    <span class="badge bg-${severityColor}">${factor.severity}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = factorsHtml;
+}
+
+function renderRecommendations(recommendations) {
+    const container = document.getElementById('recommendations');
+    
+    if (recommendations.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-emoji-smile fs-4 text-success"></i>
+                <div class="mt-2">No specific interventions required at this time</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const recommendationsHtml = recommendations.map((rec, index) => `
+        <div class="d-flex align-items-start mb-3">
+            <div class="me-3 mt-1">
+                <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+            </div>
+            <div class="flex-fill">
+                <div class="fw-semibold mb-1">Recommendation ${index + 1}</div>
+                <div class="text-muted">${rec}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = recommendationsHtml;
+}
+
+function renderInterventionNotes(notes) {
+    const container = document.getElementById('interventionNotes');
+    
+    if (notes.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="bi bi-journal fs-4"></i>
+                <div class="mt-2">No intervention notes yet</div>
+                <small>Add the first note to start tracking interventions</small>
+            </div>
+        `;
+        return;
+    }
+    
+    const notesHtml = notes.map(note => {
+        const date = new Date(note.timestamp).toLocaleString();
+        return `
+            <div class="border rounded p-3 mb-3 bg-light">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <small class="text-muted">
+                        <i class="bi bi-person me-1"></i>
+                        ${note.mentor_id}
+                    </small>
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        ${date}
+                    </small>
+                </div>
+                <div>${note.note}</div>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = notesHtml;
+}
+
+function showAddNoteForm() {
+    document.getElementById('addNoteForm').style.display = 'block';
+    document.getElementById('newNoteText').focus();
+}
+
+function cancelAddNote() {
+    document.getElementById('addNoteForm').style.display = 'none';
+    document.getElementById('newNoteText').value = '';
+}
+
+function saveNote() {
+    const noteText = document.getElementById('newNoteText').value.trim();
+    
+    if (!noteText) {
+        showAlert('warning', 'Please enter a note before saving.');
+        return;
+    }
+    
+    fetch(`/api/student/${currentStudentId}/note`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ note: noteText })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert('danger', data.error);
+        } else {
+            showAlert('success', 'Intervention note saved successfully');
+            cancelAddNote();
+            // Refresh the student profile
+            showStudentProfile(currentStudentId);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Error saving note: ' + error.message);
+    });
+}
+</script>
+{% endblock %}

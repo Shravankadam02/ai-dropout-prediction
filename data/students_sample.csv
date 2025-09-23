@@ -1,0 +1,13 @@
+student_id,first_name,last_name,class,roll_no,attendance_percent,fees_due_days,attempts_in_subject_X,last_test_1,last_test_2,last_test_3,last_3_tests_avg,previous_3_tests_avg
+S1001,Ramesh,Kumar,Diploma-CS,01,62,25,2,38,50,11,51,37
+S1002,Priya,Sharma,Diploma-CS,02,85,0,1,78,82,75,78.3,72
+S1003,Amit,Singh,Diploma-ME,03,45,120,4,35,40,38,37.7,58
+S1004,Sneha,Patel,Diploma-CS,04,78,15,1,85,88,82,85,80
+S1005,Rohit,Gupta,Diploma-EE,05,55,90,3,48,45,42,45,62
+S1006,Kavya,Reddy,Diploma-CS,06,92,0,1,90,88,92,90,85
+S1007,Arjun,Mehta,Diploma-ME,07,68,60,2,65,58,62,61.7,70
+S1008,Pooja,Joshi,Diploma-EE,08,12,150,5,25,30,28,27.7,55
+S1009,Vikram,Nair,Diploma-CS,09,88,5,1,92,89,91,90.7,88
+S1010,Anita,Verma,Diploma-ME,10,72,25,2,68,72,70,70,75
+S1011,Karan,Yadav,Diploma-EE,11,58,75,3,52,48,55,51.7,68
+S1012,Divya,Agarwal,Diploma-CS,12,95,0,1,95,93,97,95,92

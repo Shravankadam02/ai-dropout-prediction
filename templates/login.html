@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Login - AI Dropout Prediction System{% endblock %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100">
+        <div class="col-lg-4 col-md-6 col-sm-8 mx-auto">
+            <!-- Login Card -->
+            <div class="card shadow-lg border-0" style="border-radius: 20px;">
+                <div class="card-body p-5">
+                    <!-- Logo & Title -->
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="bi bi-mortarboard-fill text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h2 class="fw-bold text-primary mb-2">AI Dropout Prediction</h2>
+                        <p class="text-muted">Smart India Hackathon 2025</p>
+                    </div>
+
+                    <!-- Demo Credentials Alert -->
+                    <div class="alert alert-info alert-dismissible fade show" role="alert">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Demo Credentials:</strong> mentor / admin
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+
+                    <!-- Login Form -->
+                    <form id="loginForm" method="POST" action="/login">
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-semibold">
+                                <i class="bi bi-person me-2"></i>Username
+                            </label>
+                            <input type="text" class="form-control form-control-lg" 
+                                   id="username" name="username" placeholder="Enter your username" 
+                                   value="mentor" required>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="bi bi-lock me-2"></i>Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" class="form-control form-control-lg" 
+                                       id="password" name="password" placeholder="Enter your password" 
+                                       value="admin" required>
+                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                    <i class="bi bi-eye" id="toggleIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
+                                <span class="loading-spinner spinner-border spinner-border-sm me-2" style="display: none;"></span>
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                Sign In
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Features Preview -->
+                    <div class="row text-center mt-4">
+                        <div class="col-4">
+                            <i class="bi bi-graph-up text-primary fs-4"></i>
+                            <div class="small text-muted mt-1">Risk Analysis</div>
+                        </div>
+                        <div class="col-4">
+                            <i class="bi bi-people text-success fs-4"></i>
+                            <div class="small text-muted mt-1">Student Tracking</div>
+                        </div>
+                        <div class="col-4">
+                            <i class="bi bi-bell text-warning fs-4"></i>
+                            <div class="small text-muted mt-1">Smart Alerts</div>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            Powered by AI & Machine Learning<br>
+                            <strong>Smart India Hackathon 2025</strong>
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Info Card -->
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body p-3">
+                    <h6 class="fw-bold mb-2">
+                        <i class="bi bi-lightbulb text-warning me-2"></i>
+                        Demo Features
+                    </h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">
+                                • Risk Scoring Algorithm<br>
+                                • Interactive Dashboard<br>
+                                • Student Profiles
+                            </small>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">
+                                • Intervention Notes<br>
+                                • CSV Data Upload<br>
+                                • Analytics Charts
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                <h3 class="text-success mt-3 mb-3">Login Successful!</h3>
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted mt-3">Redirecting to dashboard...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function togglePassword() {
+    const passwordInput = document.getElementById('password');
+    const toggleIcon = document.getElementById('toggleIcon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.className = 'bi bi-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.className = 'bi bi-eye';
+    }
+}
+
+// Handle form submission
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const loginBtn = document.getElementById('loginBtn');
+    const spinner = loginBtn.querySelector('.loading-spinner');
+    const formData = new FormData(this);
+    
+    // Show loading state
+    spinner.style.display = 'inline-block';
+    loginBtn.disabled = true;
+    loginBtn.innerHTML = `
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Signing in...
+    `;
+    
+    // Submit form data
+    fetch('/login', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (response.ok) {
+            // Check if response is JSON or redirect
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return response.json().then(data => {
+                    if (data.status === 'success') {
+                        showSuccessAndRedirect();
+                    } else {
+                        throw new Error(data.message || 'Login failed');
+                    }
+                });
+            } else {
+                // It's a redirect response, follow it
+                window.location.href = '/dashboard';
+            }
+        } else {
+            throw new Error('Login failed');
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        
+        // Reset button
+        spinner.style.display = 'none';
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = `
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Sign In
+        `;
+        
+        // Show error
+        showAlert('danger', error.message || 'Login failed. Please try again.');
+        
+        // Shake animation
+        document.querySelector('.card').style.animation = 'shake 0.5s';
+        setTimeout(() => {
+            document.querySelector('.card').style.animation = '';
+        }, 500);
+    });
+});
+
+function showSuccessAndRedirect() {
+    // Show success modal
+    const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    successModal.show();
+    
+    // Redirect after 2 seconds
+    setTimeout(() => {
+        window.location.href = '/dashboard';
+    }, 2000);
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const form = document.getElementById('loginForm');
+    form.parentNode.insertBefore(alertDiv, form);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Auto-focus username field on load
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('username').focus();
+});
+
+// Add CSS for shake animation
+const shakeCSS = `
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+`;
+const style = document.createElement('style');
+style.textContent = shakeCSS;
+document.head.appendChild(style);
+</script>
+{% endblock %}

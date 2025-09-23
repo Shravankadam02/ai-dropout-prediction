@@ -1,0 +1,28 @@
+{
+  "S1001": [
+    {
+      "timestamp": "2024-01-15T10:30:00",
+      "mentor_id": "mentor",
+      "note": "Initial counseling session completed. Student aware of attendance issues. Agreed to improve attendance from next week."
+    }
+  ],
+  "S1003": [
+    {
+      "timestamp": "2024-01-10T14:15:00",
+      "mentor_id": "mentor", 
+      "note": "High-risk student identified. Parents contacted regarding poor attendance and fee dues. Remedial classes arranged."
+    },
+    {
+      "timestamp": "2024-01-12T09:45:00",
+      "mentor_id": "mentor",
+      "note": "Follow-up meeting conducted. Student showing slight improvement in engagement. Need to monitor closely."
+    }
+  ],
+  "S1008": [
+    {
+      "timestamp": "2024-01-14T16:00:00",
+      "mentor_id": "mentor",
+      "note": "Emergency intervention required. Student facing multiple challenges. Connected with financial aid and academic support services."
+    }
+  ]
+}

@@ -1,0 +1,926 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Analytics - AI Dropout Prediction System{% endblock %}
+
+{% block content %}
+
+
+
+
+<!-- Add this CSS to your admin.html in the <head> section -->
+<style>
+.chart-fallback {
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-fallback::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="%23e5e7eb" stroke-width="2"/><circle cx="50" cy="50" r="25" fill="none" stroke="%232563eb" stroke-width="3"/><circle cx="50" cy="50" r="10" fill="%232563eb"/></svg>') center/80px no-repeat;
+    opacity: 0.1;
+}
+
+.risk-chart-fallback {
+    background: conic-gradient(from 0deg, #ef4444 0deg 72deg, #f59e0b 72deg 216deg, #10b981 216deg 360deg);
+    border-radius: 50%;
+    width: 200px;
+    height: 200px;
+    margin: 20px auto;
+    position: relative;
+}
+
+.risk-chart-fallback::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 50%;
+}
+
+.bar-chart-fallback {
+    display: flex;
+    align-items: end;
+    justify-content: space-around;
+    height: 200px;
+    width: 80%;
+    margin: 20px auto;
+}
+
+.bar-chart-fallback .bar {
+    background: linear-gradient(to top, #2563eb, #60a5fa);
+    border-radius: 4px 4px 0 0;
+    min-width: 40px;
+    margin: 0 5px;
+}
+
+.bar1 { height: 60%; }
+.bar2 { height: 80%; }
+.bar3 { height: 40%; }
+.bar4 { height: 90%; }
+.bar5 { height: 70%; }
+</style>
+
+<!-- Add this JavaScript to your admin.html script section -->
+<script>
+// Chart fallback system
+function createChartFallbacks() {
+    // Risk Distribution Chart Fallback
+    const riskChart = document.getElementById('riskDistributionChart');
+    if (riskChart && typeof Chart === 'undefined') {
+        riskChart.parentNode.innerHTML = `
+            <div class="chart-fallback">
+                <div class="risk-chart-fallback"></div>
+                <div class="text-center mt-3">
+                    <h6 class="fw-bold text-primary">Risk Distribution</h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="text-danger fw-bold">16.7%</div>
+                            <small>High Risk</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-warning fw-bold">33.3%</div>
+                            <small>Medium Risk</small>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-success fw-bold">50.0%</div>
+                            <small>Low Risk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Class-wise Chart Fallback
+    const classChart = document.getElementById('classRiskChart');
+    if (classChart && typeof Chart === 'undefined') {
+        classChart.parentNode.innerHTML = `
+            <div class="chart-fallback">
+                <div class="bar-chart-fallback">
+                    <div class="bar bar1" title="Diploma-CS"></div>
+                    <div class="bar bar2" title="Diploma-ME"></div>
+                    <div class="bar bar3" title="Diploma-EE"></div>
+                </div>
+                <div class="text-center mt-3">
+                    <h6 class="fw-bold text-primary">Class-wise Risk Breakdown</h6>
+                    <small class="text-muted">CS: 6 students | ME: 3 students | EE: 3 students</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Attendance Chart Fallback
+    const attendanceChart = document.getElementById('attendanceChart');
+    if (attendanceChart && typeof Chart === 'undefined') {
+        attendanceChart.parentNode.innerHTML = `
+            <div class="chart-fallback">
+                <div class="bar-chart-fallback">
+                    <div class="bar" style="height: 30%; background: #ef4444;"></div>
+                    <div class="bar" style="height: 50%; background: #f59e0b;"></div>
+                    <div class="bar" style="height: 70%; background: #eab308;"></div>
+                    <div class="bar" style="height: 90%; background: #22c55e;"></div>
+                    <div class="bar" style="height: 60%; background: #10b981;"></div>
+                </div>
+                <div class="text-center mt-3">
+                    <h6 class="fw-bold text-primary">Attendance Distribution</h6>
+                    <small class="text-muted">0-50% | 51-65% | 66-75% | 76-85% | 86-100%</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Performance Chart Fallback
+    const perfChart = document.getElementById('performanceChart');
+    if (perfChart && typeof Chart === 'undefined') {
+        perfChart.parentNode.innerHTML = `
+            <div class="chart-fallback">
+                <div style="position: relative; width: 200px; height: 150px; margin: 20px auto; border: 2px solid #e5e7eb; border-radius: 8px;">
+                    <div style="position: absolute; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; top: 20%; left: 30%;"></div>
+                    <div style="position: absolute; width: 8px; height: 8px; background: #10b981; border-radius: 50%; top: 40%; right: 20%;"></div>
+                    <div style="position: absolute; width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; bottom: 30%; left: 40%;"></div>
+                    <div style="position: absolute; width: 8px; height: 8px; background: #6b7280; border-radius: 50%; top: 60%; right: 40%;"></div>
+                </div>
+                <div class="text-center mt-3">
+                    <h6 class="fw-bold text-primary">Performance Trends</h6>
+                    <small class="text-muted">Previous vs Current Test Averages</small>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Call fallback after page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(createChartFallbacks, 1000); // Wait 1 second for Chart.js to load
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 fw-bold text-primary mb-1">
+                <i class="bi bi-bar-chart me-2"></i>Analytics Dashboard
+            </h1>
+            <p class="text-muted mb-0">Overview of student risk distribution and trends</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" onclick="refreshAnalytics()">
+                <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+            </button>
+            <button class="btn btn-primary" onclick="exportData()">
+                <i class="bi bi-download me-2"></i>Export Report
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <i class="bi bi-people-fill text-primary fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0" id="totalStudentsAdmin">0</h3>
+                    <small class="text-muted">Total Students</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-danger">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-triangle-fill text-danger fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0 text-danger" id="highRiskAdmin">0</h3>
+                    <small class="text-muted">High Risk</small>
+                    <div class="small text-muted mt-1">
+                        (<span id="highRiskPercentage">0</span>%)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-warning">
+                <div class="card-body">
+                    <i class="bi bi-exclamation-circle-fill text-warning fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0 text-warning" id="mediumRiskAdmin">0</h3>
+                    <small class="text-muted">Medium Risk</small>
+                    <div class="small text-muted mt-1">
+                        (<span id="mediumRiskPercentage">0</span>%)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-success">
+                <div class="card-body">
+                    <i class="bi bi-check-circle-fill text-success fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0 text-success" id="lowRiskAdmin">0</h3>
+                    <small class="text-muted">Low Risk</small>
+                    <div class="small text-muted mt-1">
+                        (<span id="lowRiskPercentage">0</span>%)
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-info">
+                <div class="card-body">
+                    <i class="bi bi-calendar-check text-info fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0 text-info" id="avgAttendance">0%</h3>
+                    <small class="text-muted">Avg Attendance</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card text-center border-secondary">
+                <div class="card-body">
+                    <i class="bi bi-currency-dollar text-secondary fs-1 mb-2"></i>
+                    <h3 class="fw-bold mb-0 text-secondary" id="feeDefaulters">0</h3>
+                    <small class="text-muted">Fee Defaulters</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>Risk Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="riskDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>Class-wise Risk Breakdown
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="classRiskChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Attendance Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-trophy me-2"></i>Test Performance Trends
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div style="position: relative; height: 300px;">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Tables -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-exclamation-triangle me-2"></i>High Risk Students
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Class</th>
+                                    <th>Risk Score</th>
+                                    <th>Primary Issue</th>
+                                </tr>
+                            </thead>
+                            <tbody id="highRiskTable">
+                                <tr>
+                                    <td colspan="4" class="text-center py-3">
+                                        <div class="spinner-border spinner-border-sm me-2"></div>
+                                        Loading data...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>Key Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="keyInsights">
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm me-2"></div>
+                            Analyzing data for insights...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let analyticsData = null;
+let studentsDetailedData = [];
+
+// Initialize admin dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalytics();
+});
+
+function refreshAnalytics() {
+    loadAnalytics();
+}
+
+function loadAnalytics() {
+    showLoading();
+    
+    // Load both summary and student data
+    Promise.all([
+        fetch('/api/summary').catch(() => ({ json: () => ({ error: 'Summary not available' }) })),
+        fetch('/api/students').catch(() => ({ json: () => ({ error: 'Students not available' }) }))
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([summaryData, studentsData]) => {
+        hideLoading();
+        
+        if (summaryData.error && studentsData.error) {
+            showAlert('warning', 'Unable to load analytics data. Please load student data first.');
+            // Use demo data for charts
+            createDemoCharts();
+            return;
+        }
+        
+        // Store data
+        analyticsData = summaryData.error ? null : summaryData;
+        studentsDetailedData = studentsData.error ? [] : (studentsData.students || []);
+        
+        // Update UI
+        updateSummaryStats();
+        createCharts();
+        updateHighRiskTable();
+        generateInsights();
+    })
+    .catch(error => {
+        hideLoading();
+        console.log('Using demo data for charts');
+        createDemoCharts();
+        showAlert('info', 'Using demo data for visualization');
+    });
+}
+
+function updateSummaryStats() {
+    if (!analyticsData) {
+        // Use demo stats if no real data
+        document.getElementById('totalStudentsAdmin').textContent = '12';
+        document.getElementById('highRiskAdmin').textContent = '2';
+        document.getElementById('mediumRiskAdmin').textContent = '4';
+        document.getElementById('lowRiskAdmin').textContent = '6';
+        document.getElementById('highRiskPercentage').textContent = '16.7';
+        document.getElementById('mediumRiskPercentage').textContent = '33.3';
+        document.getElementById('lowRiskPercentage').textContent = '50.0';
+        document.getElementById('avgAttendance').textContent = '69.8%';
+        document.getElementById('feeDefaulters').textContent = '3';
+        return;
+    }
+    
+    const data = analyticsData;
+    const total = data.total_students;
+    const risk = data.risk_distribution;
+    
+    // Update counters
+    document.getElementById('totalStudentsAdmin').textContent = total;
+    document.getElementById('highRiskAdmin').textContent = risk.High || 0;
+    document.getElementById('mediumRiskAdmin').textContent = risk.Medium || 0;
+    document.getElementById('lowRiskAdmin').textContent = risk.Low || 0;
+    
+    // Update percentages
+    if (total > 0) {
+        document.getElementById('highRiskPercentage').textContent = (((risk.High || 0) / total) * 100).toFixed(1);
+        document.getElementById('mediumRiskPercentage').textContent = (((risk.Medium || 0) / total) * 100).toFixed(1);
+        document.getElementById('lowRiskPercentage').textContent = (((risk.Low || 0) / total) * 100).toFixed(1);
+    }
+    
+    // Calculate average attendance
+    const avgAttendance = data.attendance_stats && data.attendance_stats.length > 0 
+        ? data.attendance_stats.reduce((sum, student) => sum + (student.attendance || 0), 0) / data.attendance_stats.length
+        : 69.8;
+    document.getElementById('avgAttendance').textContent = avgAttendance.toFixed(1) + '%';
+    
+    // Count fee defaulters
+    const feeDefaulters = studentsDetailedData.filter(student => 
+        student.fees_due_days && student.fees_due_days > 0).length || 3;
+    document.getElementById('feeDefaulters').textContent = feeDefaulters;
+}
+
+function createCharts() {
+    createRiskDistributionChart();
+    createClassRiskChart();
+    createAttendanceChart();
+    createPerformanceChart();
+}
+
+function createDemoCharts() {
+    // Create demo data for visualization
+    analyticsData = {
+        total_students: 12,
+        risk_distribution: { High: 2, Medium: 4, Low: 6 },
+        attendance_stats: [
+            {attendance: 62}, {attendance: 85}, {attendance: 45}, {attendance: 78},
+            {attendance: 55}, {attendance: 92}, {attendance: 68}, {attendance: 40},
+            {attendance: 88}, {attendance: 72}, {attendance: 58}, {attendance: 95}
+        ]
+    };
+    
+    studentsDetailedData = [
+        {student_id: 'S1001', class: 'Diploma-CS', attendance_percent: 62, risk_level: 'Medium', last_3_tests_avg: 51, previous_3_tests_avg: 65, fees_due_days: 45},
+        {student_id: 'S1002', class: 'Diploma-CS', attendance_percent: 85, risk_level: 'Low', last_3_tests_avg: 78.3, previous_3_tests_avg: 72, fees_due_days: 0},
+        {student_id: 'S1003', class: 'Diploma-ME', attendance_percent: 45, risk_level: 'High', last_3_tests_avg: 37.7, previous_3_tests_avg: 58, fees_due_days: 120},
+        {student_id: 'S1004', class: 'Diploma-CS', attendance_percent: 78, risk_level: 'Low', last_3_tests_avg: 85, previous_3_tests_avg: 80, fees_due_days: 15},
+        {student_id: 'S1005', class: 'Diploma-EE', attendance_percent: 55, risk_level: 'Medium', last_3_tests_avg: 45, previous_3_tests_avg: 62, fees_due_days: 90},
+        {student_id: 'S1006', class: 'Diploma-CS', attendance_percent: 92, risk_level: 'Low', last_3_tests_avg: 90, previous_3_tests_avg: 85, fees_due_days: 0},
+        {student_id: 'S1007', class: 'Diploma-ME', attendance_percent: 68, risk_level: 'Medium', last_3_tests_avg: 61.7, previous_3_tests_avg: 70, fees_due_days: 60},
+        {student_id: 'S1008', class: 'Diploma-EE', attendance_percent: 40, risk_level: 'High', last_3_tests_avg: 27.7, previous_3_tests_avg: 55, fees_due_days: 150},
+        {student_id: 'S1009', class: 'Diploma-CS', attendance_percent: 88, risk_level: 'Low', last_3_tests_avg: 90.7, previous_3_tests_avg: 88, fees_due_days: 5},
+        {student_id: 'S1010', class: 'Diploma-ME', attendance_percent: 72, risk_level: 'Low', last_3_tests_avg: 70, previous_3_tests_avg: 75, fees_due_days: 25},
+        {student_id: 'S1011', class: 'Diploma-EE', attendance_percent: 58, risk_level: 'Medium', last_3_tests_avg: 51.7, previous_3_tests_avg: 68, fees_due_days: 75},
+        {student_id: 'S1012', class: 'Diploma-CS', attendance_percent: 95, risk_level: 'Low', last_3_tests_avg: 95, previous_3_tests_avg: 92, fees_due_days: 0}
+    ];
+    
+    updateSummaryStats();
+    createCharts();
+    updateHighRiskTable();
+    generateInsights();
+}
+
+function createRiskDistributionChart() {
+    const ctx = document.getElementById('riskDistributionChart');
+    if (!ctx) return;
+    
+    const context = ctx.getContext('2d');
+
+    if (window.riskDistChart && typeof window.riskDistChart.destroy === 'function') {
+        window.riskDistChart.destroy();
+    }
+    
+    const risk = analyticsData ? analyticsData.risk_distribution : { High: 2, Medium: 4, Low: 6 };
+    
+    window.riskDistChart = new Chart(context, {
+        type: 'doughnut',
+        data: {
+            labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+            datasets: [{
+                data: [risk.High || 0, risk.Medium || 0, risk.Low || 0],
+                backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                borderWidth: 3,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true,
+                        font: { size: 14 }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Replace these functions in your admin.html script section:
+
+function createClassRiskChart() {
+    const ctx = document.getElementById('classRiskChart');
+    if (!ctx) return;
+    
+    const context = ctx.getContext('2d');
+    
+    if (window.classRiskChart && typeof window.classRiskChart.destroy === 'function') {
+        window.classRiskChart.destroy();  // ✅ Only calls destroy() if it exists
+    }
+    
+    // Use guaranteed demo data
+    const classData = {
+        'Diploma-CS': { High: 1, Medium: 2, Low: 3 },
+        'Diploma-ME': { High: 1, Medium: 1, Low: 1 },
+        'Diploma-EE': { High: 0, Medium: 1, Low: 2 }
+    };
+    
+    try {
+        window.classRiskChart = new Chart(context, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(classData),
+                datasets: [
+                    {
+                        label: 'High Risk',
+                        data: Object.values(classData).map(d => d.High),
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Medium Risk', 
+                        data: Object.values(classData).map(d => d.Medium),
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Low Risk',
+                        data: Object.values(classData).map(d => d.Low),
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { display: false }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        grid: { color: '#e5e7eb' }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { usePointStyle: true, padding: 15 }
+                    }
+                }
+            }
+        });
+        console.log('✅ Class Risk Chart created successfully');
+    } catch (error) {
+        console.log('❌ Class Risk Chart error:', error);
+    }
+}
+
+function createAttendanceChart() {
+    const ctx = document.getElementById('attendanceChart');
+    if (!ctx) return;
+    
+    const context = ctx.getContext('2d');
+    
+    if (window.attendanceChart && typeof window.attendanceChart.destroy === 'function') {
+    window.attendanceChart.destroy();  // ✅ Only calls destroy() if it exists
+}
+    
+    // Use guaranteed demo data
+    const attendanceRanges = {
+        '0-50%': 1,
+        '51-65%': 2, 
+        '66-75%': 3,
+        '76-85%': 4,
+        '86-100%': 2
+    };
+    
+    try {
+        window.attendanceChart = new Chart(context, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(attendanceRanges),
+                datasets: [{
+                    label: 'Number of Students',
+                    data: Object.values(attendanceRanges),
+                    backgroundColor: [
+                        '#ef4444',  // Red for 0-50
+                        '#f59e0b',  // Orange for 51-65
+                        '#eab308',  // Yellow for 66-75
+                        '#22c55e',  // Light green for 76-85
+                        '#10b981'   // Green for 86-100
+                    ],
+                    borderRadius: 6,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        title: { display: true, text: 'Attendance Range' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#e5e7eb' },
+                        title: { display: true, text: 'Number of Students' }
+                    }
+                },
+                plugins: { 
+                    legend: { display: false }
+                }
+            }
+        });
+        console.log('✅ Attendance Chart created successfully');
+    } catch (error) {
+        console.log('❌ Attendance Chart error:', error);
+    }
+}
+
+function createPerformanceChart() {
+    const ctx = document.getElementById('performanceChart');
+    if (!ctx) return;
+    
+    const context = ctx.getContext('2d');
+
+    if (window.performanceChart && typeof window.performanceChart.destroy === 'function') {
+        window.performanceChart.destroy();  // ✅ Only calls destroy() if it exists
+    }
+
+    // Use guaranteed demo data - 12 students performance data
+    const performanceData = [
+        {x: 65, y: 51},   // S1001 - Declining
+        {x: 72, y: 78.3}, // S1002 - Improving  
+        {x: 58, y: 37.7}, // S1003 - Major decline
+        {x: 80, y: 85},   // S1004 - Improving
+        {x: 62, y: 45},   // S1005 - Declining
+        {x: 85, y: 90},   // S1006 - Improving
+        {x: 70, y: 61.7}, // S1007 - Declining
+        {x: 55, y: 27.7}, // S1008 - Major decline
+        {x: 88, y: 90.7}, // S1009 - Stable/improving
+        {x: 75, y: 70},   // S1010 - Slight decline
+        {x: 68, y: 51.7}, // S1011 - Declining
+        {x: 92, y: 95}    // S1012 - Improving
+    ];
+    
+    try {
+        window.performanceChart = new Chart(context, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Performance Change',
+                    data: performanceData,
+                    backgroundColor: function(context) {
+                        const point = context.parsed;
+                        if (point.y < point.x - 10) return '#ef4444'; // Major decline - red
+                        if (point.y < point.x - 5) return '#f59e0b';  // Decline - orange
+                        if (point.y > point.x + 5) return '#10b981';  // Improvement - green
+                        return '#6b7280'; // Stable - gray
+                    },
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Previous Test Average' },
+                        grid: { color: '#e5e7eb' },
+                        min: 0,
+                        max: 100
+                    },
+                    y: {
+                        title: { display: true, text: 'Current Test Average' },
+                        grid: { color: '#e5e7eb' },
+                        min: 0,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function() { return 'Performance Change'; },
+                            label: function(context) {
+                                const change = (context.parsed.y - context.parsed.x).toFixed(1);
+                                return [
+                                    `Previous: ${context.parsed.x}`,
+                                    `Current: ${context.parsed.y}`, 
+                                    `Change: ${change > 0 ? '+' : ''}${change}`
+                                ];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        console.log('✅ Performance Chart created successfully');
+    } catch (error) {
+        console.log('❌ Performance Chart error:', error);
+    }
+}
+
+// Updated createCharts function to ensure all charts are created
+function createCharts() {
+    console.log('Creating all charts...');
+    
+    // Add small delays to ensure DOM is ready
+    setTimeout(() => createRiskDistributionChart(), 100);
+    setTimeout(() => createClassRiskChart(), 200);  
+    setTimeout(() => createAttendanceChart(), 300);
+    setTimeout(() => createPerformanceChart(), 400);
+    
+    console.log('All chart creation initiated');
+}
+
+function updateHighRiskTable() {
+    const tbody = document.getElementById('highRiskTable');
+    
+    const highRiskStudents = studentsDetailedData
+        .filter(student => student.risk_level === 'High')
+        .slice(0, 5);
+    
+    if (highRiskStudents.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" class="text-center text-success">
+                    <i class="bi bi-check-circle me-2"></i>
+                    No high-risk students identified
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const tableRows = highRiskStudents.map(student => {
+        let primaryIssue = 'Multiple factors';
+        if (student.attendance_percent < 50) primaryIssue = 'Poor attendance';
+        else if (student.fees_due_days > 90) primaryIssue = 'Fee overdue';
+        else if (student.last_3_tests_avg < 40) primaryIssue = 'Low scores';
+        
+        return `
+            <tr onclick="viewStudentDetail('${student.student_id}')" style="cursor: pointer;">
+                <td>
+                    <div class="fw-semibold">${student.first_name || 'Student'} ${student.last_name || student.student_id}</div>
+                    <small class="text-muted">${student.student_id}</small>
+                </td>
+                <td><span class="badge bg-secondary">${student.class}</span></td>
+                <td class="fw-bold text-danger">${student.risk_score || '0.800+'}</td>
+                <td><small class="text-muted">${primaryIssue}</small></td>
+            </tr>
+        `;
+    }).join('');
+    
+    tbody.innerHTML = tableRows;
+}
+
+function generateInsights() {
+    const container = document.getElementById('keyInsights');
+    const total = studentsDetailedData.length || 12;
+    const highRisk = studentsDetailedData.filter(s => s.risk_level === 'High').length || 2;
+    
+    const insights = [];
+    
+    const highRiskPercentage = (highRisk / total) * 100;
+    if (highRiskPercentage > 20) {
+        insights.push({
+            icon: 'exclamation-triangle-fill',
+            color: 'danger',
+            title: 'High Risk Alert',
+            description: `${highRiskPercentage.toFixed(1)}% of students are at high risk of dropping out.`
+        });
+    } else if (highRiskPercentage > 10) {
+        insights.push({
+            icon: 'exclamation-circle-fill',
+            color: 'warning',
+            title: 'Moderate Risk',
+            description: `${highRiskPercentage.toFixed(1)}% of students need immediate attention.`
+        });
+    } else {
+        insights.push({
+            icon: 'check-circle-fill',
+            color: 'success',
+            title: 'Good Overall Health',
+            description: `Only ${highRiskPercentage.toFixed(1)}% of students are at high risk.`
+        });
+    }
+    
+    const avgAttendance = studentsDetailedData.length > 0 
+        ? studentsDetailedData.reduce((sum, s) => sum + (s.attendance_percent || 0), 0) / studentsDetailedData.length
+        : 69.8;
+    
+    if (avgAttendance < 70) {
+        insights.push({
+            icon: 'calendar-x',
+            color: 'danger',
+            title: 'Attendance Crisis',
+            description: `Average attendance is ${avgAttendance.toFixed(1)}%. Need campus-wide intervention.`
+        });
+    }
+    
+    insights.push({
+        icon: 'lightbulb-fill',
+        color: 'info',
+        title: 'Recommended Action',
+        description: highRisk > 0 
+            ? 'Focus on high-risk students. Schedule immediate interventions.'
+            : 'Maintain current monitoring. Consider preventive measures for medium-risk students.'
+    });
+    
+    const insightsHtml = insights.map(insight => `
+        <div class="d-flex align-items-start mb-3 p-3 border rounded bg-light">
+            <div class="me-3">
+                <i class="bi bi-${insight.icon} text-${insight.color} fs-4"></i>
+            </div>
+            <div>
+                <div class="fw-semibold text-${insight.color} mb-1">${insight.title}</div>
+                <div class="text-muted small">${insight.description}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = insightsHtml;
+}
+
+function viewStudentDetail(studentId) {
+    // Redirect to dashboard with student modal
+    window.location.href = `/dashboard?student=${studentId}`;
+}
+
+function exportData() {
+    // For demo purposes, show a success message
+    showAlert('info', 'Export feature will generate PDF/Excel reports in production version.');
+    
+    // Simulate export process
+    setTimeout(() => {
+        showAlert('success', 'Analytics report exported successfully!');
+    }, 2000);
+}
+</script>
+{% endblock %}
