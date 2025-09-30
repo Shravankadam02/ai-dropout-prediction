@@ -27,37 +27,58 @@
 
                     <!-- Login Form -->
                     <form id="loginForm" method="POST" action="/login">
-                        <div class="mb-3">
-                            <label for="username" class="form-label fw-semibold">
-                                <i class="bi bi-person me-2"></i>Username
-                            </label>
-                            <input type="text" class="form-control form-control-lg" 
-                                   id="username" name="username" placeholder="Enter your username" 
-                                   value="mentor" required>
-                        </div>
+    
 
-                        <div class="mb-4">
-                            <label for="password" class="form-label fw-semibold">
-                                <i class="bi bi-lock me-2"></i>Password
-                            </label>
-                            <div class="input-group">
-                                <input type="password" class="form-control form-control-lg" 
-                                       id="password" name="password" placeholder="Enter your password" 
-                                       value="admin" required>
-                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
-                                    <i class="bi bi-eye" id="toggleIcon"></i>
-                                </button>
-                            </div>
-                        </div>
+    <!-- Role Dropdown -->
+    <div class="mb-3">
+        <label for="role" class="form-label fw-semibold">
+            <i class="bi bi-person-badge me-2"></i>Role
+        </label>
+        <select class="form-select form-select-lg" id="role" name="role" required>
+            <option value="" selected disabled>Select your role</option>
+            <option value="mentor">Mentor</option>
+            <option value="student">Student</option>
+            <option value="class_teacher">Class Teacher</option>
+            <option value="hod">HOD</option>
+            <option value="admin">Admin</option>
+        </select>
+    </div>
 
-                        <div class="d-grid mb-3">
-                            <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
-                                <span class="loading-spinner spinner-border spinner-border-sm me-2" style="display: none;"></span>
-                                <i class="bi bi-box-arrow-in-right me-2"></i>
-                                Sign In
-                            </button>
-                        </div>
-                    </form>
+    <!-- Username -->
+    <div class="mb-3">
+        <label for="username" class="form-label fw-semibold">
+            <i class="bi bi-person me-2"></i>Username
+        </label>
+        <input type="text" class="form-control form-control-lg" 
+               id="username" name="username" placeholder="Enter your username" 
+               value="mentor" required>
+    </div>
+    
+    <!-- Password -->
+    <div class="mb-4">
+        <label for="password" class="form-label fw-semibold">
+            <i class="bi bi-lock me-2"></i>Password
+        </label>
+        <div class="input-group">
+            <input type="password" class="form-control form-control-lg" 
+                   id="password" name="password" placeholder="Enter your password" 
+                   value="admin" required>
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                <i class="bi bi-eye" id="toggleIcon"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sign In Button -->
+    <div class="d-grid mb-3">
+        <button type="submit" class="btn btn-primary btn-lg" id="loginBtn">
+            <span class="loading-spinner spinner-border spinner-border-sm me-2" style="display: none;"></span>
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Sign In
+        </button>
+    </div>
+</form>
+
 
                     <!-- Features Preview -->
                     <div class="row text-center mt-4">
@@ -222,7 +243,7 @@ function showSuccessAndRedirect() {
 
 function showAlert(type, message) {
     const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show mt-3`;
+    alertDiv.className = alert alert-${type} alert-dismissible fade show mt-3;
     alertDiv.innerHTML = `
         ${message}
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
