@@ -215,7 +215,7 @@ function formatDate(dateString) {
     } else if (diffDays === 1) {
         return 'Yesterday';
     } else if (diffDays < 7) {
-        return `${diffDays} days ago`;
+        return ${diffDays} days ago;
     } else {
         return date.toLocaleDateString();
     }
@@ -291,7 +291,7 @@ function exportTableToCSV(tableId, filename = 'data.csv') {
         const cells = Array.from(row.querySelectorAll('th, td'));
         return cells.map(cell => {
             const text = cell.textContent.trim();
-            return `"${text.replace(/"/g, '""')}"`;
+            return "${text.replace(/"/g, '""')}";
         }).join(',');
     }).join('\n');
     
@@ -329,7 +329,7 @@ function validateForm(formId) {
     const requiredInputs = form.querySelectorAll('[required]');
     
     requiredInputs.forEach(input => {
-        const errorElement = document.querySelector(`#${input.id}-error`);
+        const errorElement = document.querySelector(#${input.id}-error);
         
         if (!input.value.trim()) {
             input.classList.add('is-invalid');
@@ -512,3 +512,92 @@ window.SIHApp = {
 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     logSystemInfo();
 }
+
+// ===== Login Page JS Integration =====
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    if (!loginForm) return; // Only run on login page
+
+    // Toggle password visibility
+    const toggleBtn = document.getElementById('togglePasswordBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'bi bi-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'bi bi-eye';
+            }
+        });
+    }
+
+    // Login form submit handler
+    loginForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const loginBtn = document.getElementById('loginBtn');
+        const formData = new FormData(this);
+
+        // Validate role selection
+        if (!formData.get('role')) {
+            SIHApp.showAlert('danger', 'Please select your role.');
+            return;
+        }
+
+        // Show spinner
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = <span class="spinner-border spinner-border-sm me-2"></span> Signing in...;
+
+        fetch('/login', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Show success modal
+                const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+                successModal.show();
+
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            } else {
+                throw new Error(data.message || 'Login failed');
+            }
+        })
+        .catch(error => {
+            console.error('Login error:', error);
+
+            // Reset button
+            loginBtn.disabled = false;
+            loginBtn.innerHTML = <i class="bi bi-box-arrow-in-right me-2"></i> Sign In;
+
+            // Show error alert
+            SIHApp.showAlert('danger', error.message || 'Login failed');
+
+            // Shake animation
+            const card = document.querySelector('.card');
+            if (card) {
+                card.classList.add('shake-animation');
+                setTimeout(() => card.classList.remove('shake-animation'), 500);
+            }
+        });
+    });
+
+    // Add shake animation CSS dynamically
+    const shakeCSS = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake-animation { animation: shake 0.5s; }
+    `;
+    const style = document.createElement('style');
+    style.textContent = shakeCSS;
+    document.head.appendChild(style);
+});
