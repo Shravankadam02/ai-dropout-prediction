@@ -177,4 +177,4 @@ git push heroku main
 For demo purposes, this prototype includes sample data and hardcoded configurations. Contact the development team for production deployment guidance.
 
 ---
-**Smart India Hackathon 2025** | **Team**: [Your Team Name] | **Problem Statement**: Student Dropout Prediction
+**Smart India Hackathon 2025** | **Team**: [Team Matrix] | **Problem Statement**: Student Dropout Prediction
